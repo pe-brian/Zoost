@@ -50,9 +50,24 @@ class ZOOST_API Geom : public Transformable
 {
 public:
 
-    enum { NONE, CREATED_VERTEX, CREATED_LIAISON, CREATED_FACE, REMOVED_VERTEX, REMOVED_LIAISON, REMOVED_FACE, CLEAR };
+    ////////////////////////////////////////////////////////////
+    // Intersection struct
+    ////////////////////////////////////////////////////////////
     struct Intersection { Point result; const Liaison* l1; const Liaison* l2; };
-    struct Observer { virtual void onNotification(size_t notification, size_t id) = 0; };
+
+    ////////////////////////////////////////////////////////////
+    // Geom observer struct
+    ////////////////////////////////////////////////////////////
+    struct Observer
+    {
+        virtual void onVertexAdded() {}
+        virtual void onLiaisonAdded() {}
+        virtual void onFaceAdded() {}
+        virtual void onVertexRemoved(size_t id) {}
+        virtual void onLiaisonRemoved(size_t id) {}
+        virtual void onFaceRemoved(size_t id) {}
+        virtual void onErasing() {}
+    };
     
 public:
     
@@ -247,11 +262,6 @@ public:
     static Geom polygon(const std::initializer_list<Point>& points, const Point& position = Point{0, 0}, double rotation = 0.f);
     
 protected:
-
-    ////////////////////////////////////////////////////////////
-    // Send a notification to the observers
-    ////////////////////////////////////////////////////////////
-    void notify(size_t notification, size_t indice = 0) const;
 
     ////////////////////////////////////////////////////////////
     // Member data

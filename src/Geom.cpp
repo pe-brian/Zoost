@@ -57,13 +57,6 @@ Geom::~Geom()
 }
 
 ////////////////////////////////////////////////////////////
-void Geom::notify(size_t notification, size_t id) const
-{
-    for( auto& observer : m_observers )
-        observer->onNotification(notification, id);
-}
-
-////////////////////////////////////////////////////////////
 void Geom::addObserver(Observer& observer)
 {
     m_observers.insert(&observer);
@@ -95,7 +88,8 @@ void Geom::clear()
     
     m_rectUpdated = false;
 
-    notify(CLEAR);
+    for( auto& observer : m_observers )
+        observer->onErasing();
 }
 
 ////////////////////////////////////////////////////////////
@@ -136,9 +130,10 @@ Vertex& Geom::addVertex(const Coords& coords)
     Vertex* vertex = new Vertex(coords, *this);
     m_vertices.push_back(vertex);
 
-    m_rectUpdated = false;//getBounds().contains(convertToGlobal(coords));
+    m_rectUpdated = false;
 
-    notify(CREATED_VERTEX, m_vertices.size() - 1);
+    for( auto& observer : m_observers )
+        observer->onVertexAdded();
     
     return *vertex;
 }
@@ -149,7 +144,8 @@ Liaison& Geom::addLiaison(const Vertex& vertex1, const Vertex& vertex2)
     Liaison* liaison = new Liaison(vertex1, vertex2, *this);
     m_liaisons.push_back(liaison);
 
-    notify(CREATED_LIAISON, m_liaisons.size() - 1);
+    for( auto& observer : m_observers )
+        observer->onLiaisonAdded();
     
     return *liaison;
 }
@@ -160,7 +156,8 @@ Face& Geom::addFace(const Vertex& vertex1, const Vertex& vertex2, const Vertex& 
     Face* face = new Face(vertex1, vertex2, vertex3, *this);
     m_faces.push_back(face);
 
-    notify(CREATED_FACE, m_faces.size() - 1);
+    for( auto& observer : m_observers )
+        observer->onFaceAdded();
     
     return *face;
 }
@@ -168,31 +165,80 @@ Face& Geom::addFace(const Vertex& vertex1, const Vertex& vertex2, const Vertex& 
 ////////////////////////////////////////////////////////////
 void Geom::removeVertex(const Vertex& vertex)
 {
+    for( size_t k(0); k < m_liaisons.size(); )
+    {
+        if( &(m_liaisons[k]->v1) == &vertex || &(m_liaisons[k]->v2) == &vertex )
+        {
+            delete m_liaisons[k];
+            m_liaisons.erase(m_liaisons.begin() + k);
 
+            for( auto& observer : m_observers )
+                observer->onLiaisonRemoved(k);
+        }
+
+        else k++;
+    }
+
+    for( size_t k(0); k < m_faces.size(); k++ )
+    {
+        if( &(m_faces[k]->v1) == &vertex || &(m_faces[k]->v2) == &vertex || &(m_faces[k]->v3) == &vertex )
+        {
+            delete m_faces[k];
+            m_faces.erase(m_faces.begin() + k);
+
+            for( auto& observer : m_observers )
+                observer->onFaceRemoved(k);
+        }
+
+        else k++;
+    }
+
+    for( auto& observer : m_observers )
+        observer->onVertexRemoved(vertex.getIndice());
 }
 
 ////////////////////////////////////////////////////////////
 void Geom::removeLiaison(const Liaison& liaison)
 {
+    size_t k = 0;
+
     for( auto it = m_liaisons.begin(); it != m_liaisons.end(); ++it )
+    {
         if( *it == &liaison )
         {
             delete *it;
             m_liaisons.erase(it);
+
+            for( auto& observer : m_observers )
+                observer->onLiaisonRemoved(k);
+
             break;
         }
+
+        k++;
+    }
 }
 
 ////////////////////////////////////////////////////////////
 void Geom::removeFace(const Face& face)
 {
+    size_t k = 0;
+
     for( auto it = m_faces.begin(); it != m_faces.end(); ++it )
+    {
         if( *it == &face )
         {
             delete *it;
             m_faces.erase(it);
+
+            for( auto& observer : m_observers )
+                observer->onLiaisonRemoved(k);
+
             break;
         }
+
+        k++;
+    }
 }
 
 ////////////////////////////////////////////////////////////
