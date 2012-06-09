@@ -82,7 +82,7 @@ T Vector2<T>::angle(const Vector2<T>& A, const Vector2<T>& B)
         while( angle < -3.14159265 )
             angle+=(2*3.14159265);
 
-    return angle;
+    return static_cast<T>(angle * 180.f / 3.141592654f);
 }
 
 ////////////////////////////////////////////////////////////

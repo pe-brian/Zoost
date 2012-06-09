@@ -38,16 +38,6 @@ m_length(0)
 }
 
 ////////////////////////////////////////////////////////////
-Curve::Curve(const std::initializer_list<double>& coords) :
-m_length(0)
-{
-    std::vector<double> vector = coords;
-
-    for( size_t k(0); k < vector.size() - 1; k+=2 )
-        addVertex({vector[k], vector[k + 1]});
-}
-
-////////////////////////////////////////////////////////////
 Curve::Curve(const Curve& curve):
 m_length(0)
 {
@@ -71,7 +61,7 @@ Curve& Curve::add(const Curve& curve)
     for( auto& vertex : curve.m_vertices )
         addVertex(convertToLocal(curve.convertToGlobal(vertex->getCoords())));
 
-    m_rectUpdated = false;
+    computeBounds();
 
     return *this;
 }
@@ -154,33 +144,6 @@ Curve Curve::bezier(const std::initializer_list<Point>& keyPoints, Uint32 comple
 			point+=(keys[i] * Math::bernstein(i, keys.size() - 1, float(k) / float(complexity)));
 
 		curve.addVertex(point);
-    }
-
-    return curve;
-}
-
-////////////////////////////////////////////////////////////
-Curve Curve::bezier(const std::initializer_list<double>& keyCoords, Uint32 complexity)
-{
-    Curve curve;
-
-    if( complexity < 2 )
-        complexity = 2;
-    
-    std::vector<double> vector = keyCoords;
-    std::vector<Point> keyPoints;
-
-    for( size_t k(0); k < vector.size() - 1; k+=2 )
-        keyPoints.push_back({vector[k], vector[k + 1]});
-        
-    for( Uint32 k(0); k < complexity + 1; k++ )
-    {
-        Point point;
-
-        for( size_t i(0); i < keyPoints.size(); i++ )
-            point+=(keyPoints[i] * Math::bernstein(i, keyPoints.size() - 1, float(k) / float(complexity)));
-
-        curve.addVertex(point);
     }
 
     return curve;

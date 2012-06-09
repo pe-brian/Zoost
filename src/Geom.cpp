@@ -29,7 +29,7 @@ namespace zin
 
 ////////////////////////////////////////////////////////////
 Geom::Geom() :
-m_rectUpdated(false) {}
+m_boundsUpdated(true) {}
 
 ////////////////////////////////////////////////////////////
 Geom::Geom(const Geom& geom) :
@@ -85,11 +85,11 @@ void Geom::clear()
         delete face;
 
     m_faces.clear();
-    
-    m_rectUpdated = false;
 
     for( auto& observer : m_observers )
         observer->onErasing();
+
+    m_boundsUpdated = false;
 }
 
 ////////////////////////////////////////////////////////////
@@ -106,7 +106,9 @@ Geom& Geom::add(const Geom& geom)
     for( auto& face : geom.m_faces )
         addFace(getVertex(face->v1.getIndice() + offset), getVertex(face->v2.getIndice() + offset), getVertex(face->v3.getIndice() + offset));
 
-    m_rectUpdated = false;
+    m_boundsUpdated = false;
+
+    m_observers = geom.m_observers;
 
     return *this;
 }
@@ -130,7 +132,7 @@ Vertex& Geom::addVertex(const Coords& coords)
     Vertex* vertex = new Vertex(coords, *this);
     m_vertices.push_back(vertex);
 
-    m_rectUpdated = false;
+    computeBounds();
 
     for( auto& observer : m_observers )
         observer->onVertexAdded();
@@ -377,31 +379,41 @@ void Geom::computeBounds() const
         }
     }
         
-    m_rect.pos  = min;
-    m_rect.size = max - min;
+    m_bounds.pos  = min;
+    m_bounds.size = max - min;
 
-    if( m_rect.size.x == 0 ) m_rect.size.x = 1;
-    if( m_rect.size.y == 0 ) m_rect.size.y = 1;
-        
-    m_rectUpdated = true;
+    if( m_bounds.size.x == 0 )
+        m_bounds.size.x = 1;
+
+    if( m_bounds.size.y == 0 )
+        m_bounds.size.y = 1;
 }
 
 ////////////////////////////////////////////////////////////
 const Rect& Geom::getBounds() const
 {
-    if( !m_rectUpdated || !m_transformUpdated )
-	    computeBounds();
-	
-	return m_rect;
+    if( !m_boundsUpdated )
+    {
+        computeBounds();
+        m_boundsUpdated = true;
+    }
+
+    return m_bounds;
 }
 
 ////////////////////////////////////////////////////////////
-Geom Geom::segment(const Coords& coords1, const Coords& coords2, const Coords& position, double rotation)
+void Geom::onTransformUpdated() const
+{
+    m_boundsUpdated = false;
+
+    for( auto& observer : m_observers )
+        observer->onTransformUpdated();
+}
+
+////////////////////////////////////////////////////////////
+Geom Geom::segment(const Coords& coords1, const Coords& coords2)
 {
     Geom geom;
-
-    geom.setPosition(position);
-    geom.setRotation(rotation);
 
     Vertex& vertex1 = geom.addVertex(coords1);
     Vertex& vertex2 = geom.addVertex(coords2);
@@ -412,12 +424,9 @@ Geom Geom::segment(const Coords& coords1, const Coords& coords2, const Coords& p
 }
 
 ////////////////////////////////////////////////////////////
-Geom Geom::triangle(const Coords& coords1, const Coords& coords2, const Coords& coords3, const Coords& position, double rotation)
+Geom Geom::triangle(const Coords& coords1, const Coords& coords2, const Coords& coords3)
 {
     Geom geom;
-
-    geom.setPosition(position);
-    geom.setRotation(rotation);
 
     Vertex& vertex1 = geom.addVertex(coords1);
     Vertex& vertex2 = geom.addVertex(coords2);
@@ -433,12 +442,9 @@ Geom Geom::triangle(const Coords& coords1, const Coords& coords2, const Coords& 
 }
     
 ////////////////////////////////////////////////////////////
-Geom Geom::quad(const Coords& coords1, const Coords& coords2, const Coords& coords3, const Coords& coords4, const Coords& position, double rotation)
+Geom Geom::quad(const Coords& coords1, const Coords& coords2, const Coords& coords3, const Coords& coords4)
 {
     Geom geom;
-
-    geom.setPosition(position);
-    geom.setRotation(rotation);
 
     Vertex& vertex1 = geom.addVertex(coords1);
     Vertex& vertex2 = geom.addVertex(coords2);
@@ -457,31 +463,34 @@ Geom Geom::quad(const Coords& coords1, const Coords& coords2, const Coords& coor
 }
 
 ////////////////////////////////////////////////////////////
-Geom Geom::rectangle(const Coords& size, const Coords& position, double rotation)
+Geom Geom::rectangle(const Coords& size)
 {
-    return quad(Coords{0, 0}, Coords{size.x, 0}, Coords{size.x, size.y}, Coords{0, size.y}, position, rotation);
+    return quad(Coords{0, 0}, Coords{size.x, 0}, Coords{size.x, size.y}, Coords{0, size.y});
 }
 
 ////////////////////////////////////////////////////////////
-Geom Geom::rectangle(const Rect& rect, double rotation)
+Geom Geom::rectangle(const Rect& rect)
 {
-    return rectangle(rect.pos, rect.size, rotation);
+    Geom geom = rectangle(rect.size);
+    geom.setPosition(rect.pos);
+
+    return geom;
 }
 
 ////////////////////////////////////////////////////////////
-Geom Geom::scare(double length, const Coords& position, double rotation)
+Geom Geom::scare(double length)
 {
-    return rectangle(Coords(length, length), position, rotation);
+    return rectangle(Coords(length, length));
 }
 
 ////////////////////////////////////////////////////////////
-Geom Geom::circle(double radius, const Coords& position, double rotation)
+Geom Geom::circle(double radius)
 {
-    return polygon(radius, 40, position, rotation);
+    return polygon(radius, 40);
 }
     
 ////////////////////////////////////////////////////////////
-Geom Geom::star(const Coords& position, double rotation, double width1, double width2, unsigned int complexity)
+Geom Geom::star(double width1, double width2, unsigned int complexity)
 {
     Geom geom;
     
@@ -508,22 +517,19 @@ Geom Geom::star(const Coords& position, double rotation, double width1, double w
 
         angus+=delta;
     }
-
-    geom.setPosition(position);
-    geom.setRotation(rotation);
     
     return geom;
 }
     
 ////////////////////////////////////////////////////////////
-Geom Geom::polygon(double width, unsigned int complexity, const Coords& position, double rotation)
+Geom Geom::polygon(double width, unsigned int complexity)
 {
     Geom geom;
     
     if( complexity < 5 )
         complexity = 5;
 
-    double delta = 6.28318531 / double(complexity), angus = -1.57079633;
+    double delta = 6.28318531f / double(complexity), angus = -1.57079633f;
 
     Vertex& vertex = geom.addVertex({0, 0});
         
@@ -537,20 +543,14 @@ Geom Geom::polygon(double width, unsigned int complexity, const Coords& position
 
         angus+=delta;
     }
-
-    geom.setPosition(position);
-    geom.setRotation(rotation);
     
     return geom;
 }
 
 ////////////////////////////////////////////////////////////
-Geom Geom::polygon(const std::initializer_list<Point>& points, const Coords& position, double rotation)
+Geom Geom::polygon(const std::initializer_list<Point>& points)
 {
     Geom geom;
-
-    geom.setPosition(position);
-    geom.setRotation(rotation); 
 
     if( points.size() > 3 )
     {

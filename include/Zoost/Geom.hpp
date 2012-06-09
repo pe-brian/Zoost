@@ -56,10 +56,11 @@ public:
     struct Intersection { Point result; const Liaison* l1; const Liaison* l2; };
 
     ////////////////////////////////////////////////////////////
-    // Geom observer struct
+    // Geom observer class
     ////////////////////////////////////////////////////////////
-    struct Observer
+    class Observer
     {
+        virtual void onTransformUpdated() {}
         virtual void onVertexAdded() {}
         virtual void onLiaisonAdded() {}
         virtual void onFaceAdded() {}
@@ -67,6 +68,7 @@ public:
         virtual void onLiaisonRemoved(size_t id) {}
         virtual void onFaceRemoved(size_t id) {}
         virtual void onErasing() {}
+        friend class Geom;
     };
     
 public:
@@ -214,60 +216,65 @@ public:
     ////////////////////////////////////////////////////////////
     // Get a segment geom
     ////////////////////////////////////////////////////////////
-    static Geom segment(const Point& point1, const Point& point2, const Point& position = Point{0, 0}, double rotation = 0.f);
+    static Geom segment(const Point& point1, const Point& point2);
 
     ////////////////////////////////////////////////////////////
     // Get a triangle geom
     ////////////////////////////////////////////////////////////
-    static Geom triangle(const Point& point1, const Point& point2, const Point& point3, const Point& position = Point{0, 0}, double rotation = 0.f);
+    static Geom triangle(const Point& point1, const Point& point2, const Point& point3);
     
     ////////////////////////////////////////////////////////////
     // Get a quad geom
     ////////////////////////////////////////////////////////////
-    static Geom quad(const Point& point1, const Point& point2, const Point& point3, const Point& point4, const Point& position = Point{0, 0}, double rotation = 0.f);
+    static Geom quad(const Point& point1, const Point& point2, const Point& point3, const Point& point4);
 
     ////////////////////////////////////////////////////////////
     // Get a rectangle geom
     ////////////////////////////////////////////////////////////
-    static Geom rectangle(const Point& size, const Point& position = Point{0, 0}, double rotation = 0.f);
+    static Geom rectangle(const Point& size);
 
     ////////////////////////////////////////////////////////////
     // Get a rectangle geom
     ////////////////////////////////////////////////////////////
-    static Geom rectangle(const Rect& rect, double rotation = 0.f);
+    static Geom rectangle(const Rect& rect);
 
     ////////////////////////////////////////////////////////////
     // Get a scare geom
     ////////////////////////////////////////////////////////////
-    static Geom scare(double length, const Point& position = Point{0, 0}, double rotation = 0.f);
+    static Geom scare(double length);
     
     ////////////////////////////////////////////////////////////
     // Get a circle geom
     ////////////////////////////////////////////////////////////
-    static Geom circle(double radius = 20, const Point& position = Point{0, 0}, double rotation = 0.f);
+    static Geom circle(double radius = 20);
     
     ////////////////////////////////////////////////////////////
     // Get a star geom
     ////////////////////////////////////////////////////////////
-    static Geom star(const Point& position = Point{0, 0}, double rotation = 0.f, double width1 = 30, double width2 = 60, unsigned int complexity = 5);
+    static Geom star(double width1 = 30, double width2 = 60, unsigned int complexity = 5);
     
     ////////////////////////////////////////////////////////////
     // Get a polygon geom
     ////////////////////////////////////////////////////////////
-    static Geom polygon(double radius = 20, unsigned int complexity = 5, const Point& position = Point{0, 0}, double rotation = 0.f);
+    static Geom polygon(double radius = 20, unsigned int complexity = 5);
 
     ////////////////////////////////////////////////////////////
     // Get a polygon geom
     ////////////////////////////////////////////////////////////
-    static Geom polygon(const std::initializer_list<Point>& points, const Point& position = Point{0, 0}, double rotation = 0.f);
+    static Geom polygon(const std::initializer_list<Point>& points);
     
 protected:
 
     ////////////////////////////////////////////////////////////
+    // Method called when the tranform is updated
+    ////////////////////////////////////////////////////////////
+    void onTransformUpdated() const;
+
+    ////////////////////////////////////////////////////////////
     // Member data
     ////////////////////////////////////////////////////////////
-    mutable Rect                  m_rect;
-    mutable bool                  m_rectUpdated;
+    mutable bool                  m_boundsUpdated;
+    mutable Rect                  m_bounds;
     mutable std::vector<Vertex*>  m_vertices;
     mutable std::vector<Face*>    m_faces;
     mutable std::vector<Liaison*> m_liaisons;

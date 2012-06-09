@@ -71,14 +71,14 @@ bool Line::intersects(const Line& line, Point& result)
 }
 
 ////////////////////////////////////////////////////////////
-bool intersects(const Point& point1, const Point& point2, const Point& point3, const Point& point4)
+bool Line::intersects(const Point& point1, const Point& point2, const Point& point3, const Point& point4)
 {
 	Line line1(point1, point2), line2(point3, point4);
 	return line1.intersects(line2);
 }
 
 ////////////////////////////////////////////////////////////
-bool intersects(const Point& point1, const Point& point2, const Point& point3, const Point& point4, Point& result)
+bool Line::intersects(const Point& point1, const Point& point2, const Point& point3, const Point& point4, Point& result)
 {
 	Line line1(point1, point2), line2(point3, point4);
 	return line1.intersects(line2, result);

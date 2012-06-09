@@ -15,7 +15,7 @@
 //    If you use this software in a product, an acknowledgment
 //    in the product documentation would be appreciated but is not required.
 //
-// 2. Altered source versions must be plainly marked as such,
+// 2. Altered source versions must be plainly marked as such,  
 //    and must not be misrepresented as being the original software.
 //
 // 3. This notice may not be removed or altered from any source distribution.
@@ -46,14 +46,13 @@ Transformable& Transformable::operator=(const Transformable& transformable)
     m_position            = transformable.m_position;
     m_scale               = transformable.m_scale;
     m_rotation            = transformable.m_rotation;
-}
+}  
 
 ////////////////////////////////////////////////////////////
 void Transformable::init()
 {
     m_transform.init();
     m_invTransform.init();
-
     m_transformUpdated    = true;
     m_invTransformUpdated = true;
     m_origin              = Point();
@@ -292,6 +291,8 @@ Transform& Transformable::getTransform() const
     {
         m_transform = Transform::translation(m_position) * Transform::rotation(m_rotation, m_origin) * Transform::scaling(m_scale, m_origin);
         m_transformUpdated = true;
+
+        onTransformUpdated();
     }
     
     return m_transform;
