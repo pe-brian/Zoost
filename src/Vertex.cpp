@@ -38,7 +38,7 @@ Vertex& Vertex::operator=(const Coords& coords)
 void Vertex::setCoords(const Coords& coords)
 {
     m_coords = coords;
-    m_geom.computeBounds();
+    m_geom.onVertexMoved();
 }
 
 ////////////////////////////////////////////////////////////   

@@ -61,8 +61,6 @@ Curve& Curve::add(const Curve& curve)
     for( auto& vertex : curve.m_vertices )
         addVertex(convertToLocal(curve.convertToGlobal(vertex->getCoords())));
 
-    computeBounds();
-
     return *this;
 }
 

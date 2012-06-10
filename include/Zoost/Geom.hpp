@@ -67,6 +67,7 @@ public:
         virtual void onVertexRemoved(size_t id) {}
         virtual void onLiaisonRemoved(size_t id) {}
         virtual void onFaceRemoved(size_t id) {}
+        virtual void onVertexMoved() {}
         virtual void onErasing() {}
         friend class Geom;
     };
@@ -184,14 +185,24 @@ public:
     size_t getFacesCount() const;
 
     ////////////////////////////////////////////////////////////
-    // Compute the bounding rect of the geom
+    // Compute the local bounds of the geom
     ////////////////////////////////////////////////////////////
-    void computeBounds() const;
+    void computeLocalBounds() const;
 
     ////////////////////////////////////////////////////////////
-    // Get the bounding rect of the geom
+    // Compute the global bounds of the geom
     ////////////////////////////////////////////////////////////
-    const Rect& getBounds() const;
+    void computeGlobalBounds() const;
+
+    ////////////////////////////////////////////////////////////
+    // Get the bounds of the geom
+    ////////////////////////////////////////////////////////////
+    Rect getLocalBounds() const;
+
+    ////////////////////////////////////////////////////////////
+    // Get the bounds of the geom
+    ////////////////////////////////////////////////////////////
+    Rect getGlobalBounds() const;
     
     ////////////////////////////////////////////////////////////
     // Check if the given geom is intersecting the current one
@@ -206,12 +217,12 @@ public:
     ////////////////////////////////////////////////////////////
     // Check if the given point is contained by the geom
     ////////////////////////////////////////////////////////////
-    virtual bool contains(const Point& point);
+    virtual bool contains(Point point);
     
     ////////////////////////////////////////////////////////////
     // Check if the given point is contained by the geom
     ////////////////////////////////////////////////////////////
-    bool contains(const Point& point, std::vector<Face*>& faces);
+    bool contains(Point point, std::vector<Face*>& faces);
 
     ////////////////////////////////////////////////////////////
     // Get a segment geom
@@ -265,16 +276,25 @@ public:
     
 protected:
 
+    friend class Vertex;
+
     ////////////////////////////////////////////////////////////
     // Method called when the tranform is updated
     ////////////////////////////////////////////////////////////
     void onTransformUpdated() const;
 
     ////////////////////////////////////////////////////////////
+    // Method called when a vertex is moved
+    ////////////////////////////////////////////////////////////
+    void onVertexMoved() const;
+
+    ////////////////////////////////////////////////////////////
     // Member data
     ////////////////////////////////////////////////////////////
-    mutable bool                  m_boundsUpdated;
-    mutable Rect                  m_bounds;
+    mutable bool                  m_localBoundsUpdated;
+    mutable bool                  m_globalBoundsUpdated;
+    mutable Rect                  m_localBounds;
+    mutable Rect                  m_globalBounds;                            
     mutable std::vector<Vertex*>  m_vertices;
     mutable std::vector<Face*>    m_faces;
     mutable std::vector<Liaison*> m_liaisons;

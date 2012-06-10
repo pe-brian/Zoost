@@ -267,6 +267,12 @@ Segment Transformable::convertToGlobal(const Segment& segment) const
 }
 
 ////////////////////////////////////////////////////////////
+Rect Transformable::convertToGlobal(const Rect& rect) const
+{
+    return Rect(convertToGlobal(rect.pos), rect.size);
+}
+
+////////////////////////////////////////////////////////////
 Point Transformable::convertToLocal(const Point& point) const
 {
     return getInvTransform() * point;
@@ -282,6 +288,12 @@ Point Transformable::convertToLocal(const double pointX, const double pointY) co
 Segment Transformable::convertToLocal(const Segment& segment) const
 {
     return Segment(convertToLocal(segment.p1), convertToLocal(segment.p2));
+}
+
+////////////////////////////////////////////////////////////
+Rect Transformable::convertToLocal(const Rect& rect) const
+{
+    return Rect(convertToLocal(rect.pos), rect.size);
 }
 
 ////////////////////////////////////////////////////////////

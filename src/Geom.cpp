@@ -29,7 +29,8 @@ namespace zin
 
 ////////////////////////////////////////////////////////////
 Geom::Geom() :
-m_boundsUpdated(true) {}
+m_localBoundsUpdated(true),
+m_globalBoundsUpdated(true) {}
 
 ////////////////////////////////////////////////////////////
 Geom::Geom(const Geom& geom) :
@@ -89,7 +90,7 @@ void Geom::clear()
     for( auto& observer : m_observers )
         observer->onErasing();
 
-    m_boundsUpdated = false;
+    m_localBoundsUpdated = false;
 }
 
 ////////////////////////////////////////////////////////////
@@ -106,9 +107,11 @@ Geom& Geom::add(const Geom& geom)
     for( auto& face : geom.m_faces )
         addFace(getVertex(face->v1.getIndice() + offset), getVertex(face->v2.getIndice() + offset), getVertex(face->v3.getIndice() + offset));
 
-    m_boundsUpdated = false;
+    m_localBoundsUpdated = false;
+    m_globalBoundsUpdated = false;
 
-    m_observers = geom.m_observers;
+    for( auto& observer : geom.m_observers )
+        m_observers.insert(observer);
 
     return *this;
 }
@@ -132,7 +135,8 @@ Vertex& Geom::addVertex(const Coords& coords)
     Vertex* vertex = new Vertex(coords, *this);
     m_vertices.push_back(vertex);
 
-    computeBounds();
+    m_localBoundsUpdated = false;
+    m_globalBoundsUpdated = false;
 
     for( auto& observer : m_observers )
         observer->onVertexAdded();
@@ -281,7 +285,7 @@ size_t Geom::getFacesCount() const
 ////////////////////////////////////////////////////////////
 bool Geom::intersects(const Geom& geom) const
 {
-    if( getBounds().intersects(geom.getBounds()) )
+    if( getGlobalBounds().intersects(geom.getGlobalBounds()) )
         
 	    for( auto& liaison1 : m_liaisons )
 	    {
@@ -302,7 +306,7 @@ bool Geom::intersects(const Geom& geom) const
 ////////////////////////////////////////////////////////////
 bool Geom::intersects(const Geom& geom, std::vector<Intersection>& intersections)
 {
-    if( getBounds().intersects(geom.getBounds()) )
+    if( getGlobalBounds().intersects(geom.getGlobalBounds()) )
 
 	    for( auto& liaison1 : m_liaisons )
         {
@@ -323,39 +327,72 @@ bool Geom::intersects(const Geom& geom, std::vector<Intersection>& intersections
 }
 
 ////////////////////////////////////////////////////////////
-bool Geom::contains(const Point& point)
+bool Geom::contains(Point point)
 {
-    if( getBounds().contains(point) )
+    point = convertToLocal(point);
+
+    if( getLocalBounds().contains(point) )
 
         for( auto& face : m_faces )
-        {
-            Triangle triangle = face->getTriangle();
 
-            if( triangle.contains(point) )
+            if( Triangle::contains(face->v1.getCoords(), face->v2.getCoords(), face->v3.getCoords(), point) )
                 return true;
-        }
 	
 	return false;
 }
 
 ////////////////////////////////////////////////////////////
-bool Geom::contains(const Point& point, std::vector<Face*>& faces)
+bool Geom::contains(Point point, std::vector<Face*>& faces)
 {
-    if( getBounds().contains(point) )
+    point = convertToLocal(point);
+
+    if( getLocalBounds().contains(point) )
 
         for( auto& face : m_faces )
-        {
-            Triangle triangle = face->getTriangle();
-
-            if( triangle.contains(point) )
+        
+            if( Triangle::contains(face->v1.getCoords(), face->v2.getCoords(), face->v3.getCoords(), point) )
                 faces.push_back(face);
-        }
 	
 	return !faces.empty();
 }
 
 ////////////////////////////////////////////////////////////
-void Geom::computeBounds() const
+void Geom::computeLocalBounds() const
+{
+    Coords min, max;
+    bool init = true;
+        
+    for( auto& vertex : m_vertices )
+    {
+         Coords coords = vertex->getCoords();
+            
+        if( init )
+        {
+            min = coords;
+            max = coords;
+
+            init = false;
+        }
+            
+        else
+        {
+            min = Coords(std::min(coords.x, min.x), std::min(coords.y, min.y));
+            max = Coords(std::max(coords.x, max.x), std::max(coords.y, max.y));
+        }
+    }
+        
+    m_localBounds.pos  = min;
+    m_localBounds.size = max - min;
+
+    if( m_localBounds.size.x == 0 )
+        m_localBounds.size.x = 1;
+
+    if( m_localBounds.size.y == 0 )
+        m_localBounds.size.y = 1;
+}
+
+////////////////////////////////////////////////////////////
+void Geom::computeGlobalBounds() const
 {
     Coords min, max;
     bool init = true;
@@ -379,35 +416,57 @@ void Geom::computeBounds() const
         }
     }
         
-    m_bounds.pos  = min;
-    m_bounds.size = max - min;
+    m_globalBounds.pos  = min;
+    m_globalBounds.size = max - min;
 
-    if( m_bounds.size.x == 0 )
-        m_bounds.size.x = 1;
+    if( m_globalBounds.size.x == 0 )
+        m_globalBounds.size.x = 1;
 
-    if( m_bounds.size.y == 0 )
-        m_bounds.size.y = 1;
+    if( m_globalBounds.size.y == 0 )
+        m_globalBounds.size.y = 1;
 }
 
 ////////////////////////////////////////////////////////////
-const Rect& Geom::getBounds() const
+Rect Geom::getLocalBounds() const
 {
-    if( !m_boundsUpdated )
+    if( !m_localBoundsUpdated )
     {
-        computeBounds();
-        m_boundsUpdated = true;
+        computeLocalBounds();
+        m_localBoundsUpdated = true;
     }
 
-    return m_bounds;
+    return m_localBounds;
+}
+
+////////////////////////////////////////////////////////////
+Rect Geom::getGlobalBounds() const
+{
+    if( !m_globalBoundsUpdated )
+    {
+        computeGlobalBounds();
+        m_globalBoundsUpdated = true;
+    }
+
+    return m_globalBounds;
 }
 
 ////////////////////////////////////////////////////////////
 void Geom::onTransformUpdated() const
 {
-    m_boundsUpdated = false;
+    m_globalBoundsUpdated = false;
 
     for( auto& observer : m_observers )
         observer->onTransformUpdated();
+}
+
+////////////////////////////////////////////////////////////
+void Geom::onVertexMoved() const
+{
+    m_localBoundsUpdated = false;
+    m_globalBoundsUpdated = false;
+
+    for( auto& observer : m_observers )
+        observer->onVertexMoved();
 }
 
 ////////////////////////////////////////////////////////////

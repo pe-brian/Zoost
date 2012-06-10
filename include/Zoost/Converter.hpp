@@ -59,7 +59,7 @@ T fromString(const std::string& str)
 }
 
 ////////////////////////////////////////////////////////////
-// Convert milliseconds to digit time
+// Convert milliseconds uint32 to digit time string
 ////////////////////////////////////////////////////////////
 std::string toDigitTime(Uint32 ms);
 
