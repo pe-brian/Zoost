@@ -23,6 +23,7 @@
 ////////////////////////////////////////////////////////////
 
 #include <Zoost/Geom.hpp>
+#include <Zoost/Converter.hpp>
 
 namespace zin
 {
@@ -534,6 +535,19 @@ Geom Geom::rectangle(const Rect& rect)
     geom.setPosition(rect.pos);
 
     return geom;
+}
+
+////////////////////////////////////////////////////////////
+Geom Geom::rectangle(const Point& point1, const Point& point2, unsigned int width)
+{
+    double angle = std::atan((point2.y - point1.y) / (point2.x - point1.x));
+
+    Point p1(point1.x + width * std::cos(angle + toRads( 90)), point1.y + width * std::sin(angle + toRads( 90)));
+    Point p2(point1.x + width * std::cos(angle + toRads(270)), point1.y + width * std::sin(angle + toRads(270)));
+    Point p3(point2.x + width * std::cos(angle + toRads(270)), point2.y + width * std::sin(angle + toRads(270)));
+    Point p4(point2.x + width * std::cos(angle + toRads( 90)), point2.y + width * std::sin(angle + toRads( 90)));
+
+    return quad(p1, p2, p3, p4);
 }
 
 ////////////////////////////////////////////////////////////

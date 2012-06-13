@@ -74,15 +74,15 @@ T Vector2<T>::angle(const Vector2<T>& A, const Vector2<T>& B)
 {
     T angle = static_cast<T>(std::atan2(B.y, B.x) - std::atan2(A.y, A.x));
 
-    if( angle > 3.14159265 )
-        while( angle > 3.14159265 )
-            angle-=(2*3.14159265);
+    if( angle > 3.14159265f )
+        while( angle > 3.14159265f )
+            angle-=(2*3.14159265f);
 
-    else if( angle < -3.14159265 )
-        while( angle < -3.14159265 )
-            angle+=(2*3.14159265);
+    else if( angle < -3.14159265f )
+        while( angle < -3.14159265f )
+            angle+=(2*3.14159265f);
 
-    return static_cast<T>(angle * 180.f / 3.141592654f);
+    return static_cast<T>(angle);
 }
 
 ////////////////////////////////////////////////////////////
