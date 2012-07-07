@@ -30,16 +30,14 @@ namespace zin
 {
 
 ////////////////////////////////////////////////////////////
-Curve::Curve(const std::initializer_list<Point>& points) :
-m_length(0)
+Curve::Curve(const std::initializer_list<Point>& points)
 {
 	for( auto& point : points )
 		addVertex(point);
 }
 
 ////////////////////////////////////////////////////////////
-Curve::Curve(const Curve& curve):
-m_length(0)
+Curve::Curve(const Curve& curve)
 {
     add(curve);
 }

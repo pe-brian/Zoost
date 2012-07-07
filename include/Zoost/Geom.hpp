@@ -296,8 +296,8 @@ protected:
     ////////////////////////////////////////////////////////////
     // Member data
     ////////////////////////////////////////////////////////////
-    mutable bool                  m_localBoundsUpdated;
-    mutable bool                  m_globalBoundsUpdated;
+    mutable bool                  m_localBoundsUpdated = true;
+    mutable bool                  m_globalBoundsUpdated = true;
     mutable Rect                  m_localBounds;
     mutable Rect                  m_globalBounds;                            
     mutable std::vector<Vertex*>  m_vertices;

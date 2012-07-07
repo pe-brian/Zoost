@@ -248,8 +248,8 @@ protected:
     ////////////////////////////////////////////////////////////
     // Data members
     ////////////////////////////////////////////////////////////    
-    mutable bool      m_transformUpdated,
-                      m_invTransformUpdated;
+    mutable bool      m_transformUpdated = true,
+                      m_invTransformUpdated = true;
     mutable Transform m_transform,
                       m_invTransform;
     Point             m_origin;

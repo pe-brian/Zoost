@@ -31,9 +31,7 @@ namespace zin
 Transformable::Transformable(const Vector2d& position, double rotation, const Vector2d& scale) :
 m_position(position),
 m_rotation(rotation),
-m_scale(scale),
-m_transformUpdated(true),
-m_invTransformUpdated(true) {}
+m_scale(scale) {}
 
 ////////////////////////////////////////////////////////////
 Transformable& Transformable::operator=(const Transformable& transformable)
